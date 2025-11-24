@@ -1,0 +1,11 @@
+== Conclusion
+
+With this workshop, you have built an event-driven AI-infused application using LLM, Apache Kafka and Quarkus. 
+
+
+You've learnt:
+* How to connect real-time data feeds to your agents and LLMs doing inferencing
+* Benefit from the scalability and reliability of Kafka for agentic connectivity
+* How to bring all this together with Quarkus applications leveraging LangChain4j and LangGraph4j for LLM orchestration
+
+

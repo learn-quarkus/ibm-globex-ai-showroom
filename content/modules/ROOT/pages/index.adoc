@@ -1,43 +1,64 @@
-= {lab_name}
+:imagesdir: ../assets/images
 
-The `lab_name` var, known as an asciidoc attribute, above was set in `./content/antora.yml` and can be used to set the lab_name or title of your content.
-You are both free to change its value and if you prefer to use a different var name, you can change the value of `lab_name`, for example to `title` in `./content/antora.yml` and then reference it in your content as `\{title}`. +
+== Introduction
 
-image::rhel-logo-black.jpg[rhel-logo-black,55%,55%]
 
-== Variables
+This workshop provides hands-on experience in building scalable and reliable event-driven applications for agentic AI workflows using Apache Kafka and Red Hat OpenShift, leveraging the power of modern Java tools like Quarkus.
 
-Other vars can also be set there, such as `ssh_user` and `ssh_password`, and referenced inline in the lab content by using the `\{foo}` syntax.
+== Workshop Goal
 
-This is another var, or asciidoc attribute, from `./content/antora.yml` {my_var}
+In this workshop you will learn how Globex implements an event-driven, agentic AI applications using Apache Kafka for streaming and Quarkus with LangChain4J/LangGraph4J extensions for business logic and LLM orchestration.
 
-== Writing your lab
+=== Target Audience
 
-Whatever type of content you are writing we'll refer to your *content* as "your lab" in this document.
+This workshop is suitable for Application Developers, Architects, and AI/ML Engineers interested in integrating AI capabilities into existing enterprise applications.
 
-=== Lab structure
 
-Wether you are writing a lab
+== The story behind this workshop
 
-* First, we will build a monolithic application already compiled as RPM packages and put it into a container. This will allow us to deploy the application, copy it between machines, and update it separately from the operating system. This process affords us a portable and easily maintained component instead of tightly coupling the application with your operating system maintenance.
+In this workshop we will follow the story of *{corp}*, a fictitious retail company with an e-commerce platform. 
 
-* In closing we will build a second container on a different operating system version that makes an application not packaged into RPMs. This will be similar to a web application deployment, positioning the correct files at the right locations. To do this, we will pull a project from GitHub and position the component files within our container image. The purpose of this is to achieve a portable application container that can deploy on several different versions of Red Hat Enterprise Linux. This also provides the benefit of decoupling your application maintenance, which would all happen by building new containers versus operating system maintenance. The container is no longer reliant on the operating system installed on the machine where the application is deployed.
 
-. Now let's examine this cluster a bit more by describing the cluster (the `$GUID` environment variable is already set for you so you can immediately describe your individual cluster):
-+
-[source,sh,role=execute]
-----
-podman ps
-----
-+
-.Sample Output
-[source,texinfo,subs="attributes"]
-----
-CONTAINER ID  IMAGE                        COMMAND           CREATED      STATUS      PORTS                 NAMES
-2dcfee9e50c4  docker.io/library/httpd:2.4  httpd-foreground  3 hours ago  Up 3 hours  0.0.0.0:8080->80/tcp  showroom-httpd
-----
+Globex wants to now extend their eCommerce website to allow customers to leave their reviews of the product catalogue. They would like to
 
-=== Lab Access
+* Moderate the language comments to ensure foul language is appropriately filtered out
+* Build a Sentiment Analysis system to gain business intelligence based on the product reviews
+* Provide a concise summary of the reviews for each product to help customers make informed purchasing decisions
 
-The terminal window to your right is *already* logged into the lab environment as the `{ssh_user}` user via `ssh`. 
-All steps of this lab are to be completed as the `{ssh_user}` user.
+
+Before the age of LLM, processing of reviews was a bit hit or miss but with LLMs processing the reviews and summarizing the review and do all kind of analysis on reviews submitted by users becomes much easier. 
+
+=== Solution overview
+
+To reliably moderate and summarize the user-submitted reviews, Globex adopts an asynchronous event-driven architecture with Apache Kafka, leveraging LLMs for advanced analysis. They choose to use Quarkus as their application framework due to its seamless integration with Kafka and LLM libraries like LangChain4j and LangGraph4j.
+
+
+== Technologies You Will Use
+
+* Container Platform: Red Hat OpenShift
+* Application Runtime: Quarkus with LangChain4j and LangGraph4j extensions to build AI-infused applications
+* Apache Kafka for messaging and event streaming
+* Persistence with MongoDB
+* Security: Keycloak (for OIDC/OAuth)
+* LLM Provider: OpenAI GPT-4 via API
+
+
+== Workshop Architecture Overview
+
+image:intro/architecture-diagram.png[Architecture Diagram, width=800]
+
+* The front-end application allows users to submit reviews and view product summaries. It interacts with Keycloak for authentication and authorization, ensuring secure access to the review submission and summary features.
+* Review Processor Agent: This Quarkus-based service consumes user-submitted reviews from the `review-intake` Kafka topic. It uses an LLM to moderate the content and generate personalized thank-you emails. Moderated reviews are then published to the `review-processed` topic.
+* Review Summary Agent: This Quarkus-based service listens to the `review-processed` topic. It summarized the product reviewsusing an LLM to generate concise summaries, which are then stored in MongoDB for retrieval by the front-end application.
+
+Since it is not possible to build all of the components in a single workshop, we will focus on building primarily the two agentic applications (Review Processor and Review Summarizer) and demonstrate the end-to-end workflow using a pre-built front-end application.
+
+== Workshop Modules
+
+This workshop is divided into the following modules:
+
+* Module 1: Enviroment walkthrough and prerequisites
+* Module 2: Building the Review Processor Agentic Application
+* Module 3: Building the Review Summary Agentic Application
+* Module 4: Testing and Demonstration
+* Conclusion: Workshop Summary and Next Steps

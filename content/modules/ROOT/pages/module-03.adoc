@@ -1,0 +1,17 @@
+
+== Module 3: The Review Summary Agentic App
+
+Objective: Build and deploy the second agent, focused on data analysis and dynamic content generation via LLMs.
+
+Technical Context:
+
+This agent is also implemented with Quarkus and uses LangChain4j for a simpler LLM interaction. It demonstrates how event-driven processing (consuming from the review-processed topic) can trigger complex logic. The use of Kafka ensures that the summarizer is decoupled from the processor and is resilient to transient issues or load spikes in the overall system.
+
+Steps and Instructions:
+Examine Summary App Project: Review the Quarkus source code for the review-summary service.
+Identify Kafka Consumer: Locate the code consuming processed events from the review-processed Kafka topic.
+Analyze Summary Logic: Review the code for the decision-making process:
+Retrieve all existing reviews for the product from MongoDB.
+Apply the rule set/algorithm to decide if a new, consolidated summary must be created.
+Implement LLM Call: Ensure the LangChain4j invocation correctly prompts the LLM to generate a new, consolidated product summary based on the collection of existing reviews.
+Build and Deploy: Build the Quarkus application and deploy the review-summary service to OpenShift.

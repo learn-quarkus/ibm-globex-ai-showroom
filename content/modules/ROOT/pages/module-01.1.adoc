@@ -1,0 +1,53 @@
+:imagesdir: ../assets/images
+== Explore the Workshop Setup 
+
+The workshop makes use of Red Hat OpenShift GitOps for GitOps-based deployment and management of the various microservices and components.
+
+. Navigate to the `globex-ai` namespace in OpenShift
++
+image:m1/globex-ai-ns.png[]
+The following microservices and components are deployed as part of the workshop environment: 
+
+|=== 
+| *Component*   | *Description*
+| globex-web    |   The eComm web app written Angular, Express and Node
+| globex-db    |  Postgresql database for storing product data
+| globex-store-app   |  A majestic monolith written in Quarkus exposing user, product catalog, cart and order related APIs
+| review-processor  |  The Review Processor Agentic App built with Quarkus and LangGraph4j to moderate reviews and analyze sentiments
+| review-summarizer | The Review Summary Agentic App built with Quarkus and LangChain4j to generate product summaries based on user reviews
+| mail-mcp | The MCP Mail Server enabling secure LLM connections with external tools/services, secured with OAuth/OIDC via Keycloak
+| review-service| The back-end service for persisting review submissions to MongoDB (hosted in the mongodb namespace)
+|=== 
+
+
+== Apache Kafka:
+
+. The Apache Kafka operator (Strimzi) and the Kafka Console (StreamsHub Console Operator) have been deployed
+. Navigate to the `kafka` namespace in OpenShift and access the Kafka Console from the *Routes* section
+. Login anonymously to the Kafka Console
++
+image:m1/kafka-console-login.png[]
+. Navigate to the *Topics* tab to view the Kafka topics created for this workshop and filter the list by typing "review" in the search box
++
+image:m1/kafka-topics.png[]
+
+. Here is an overview of the Kafka topics used in this workshop:
+|=== 
+| *Topic*   | *Description*
+| reviews.intake | Reviews submitted by the user
+| reviews.errors | Reviews that failed processing
+| reviews.processed | Reviews which have been moderated and had sentiment analysis applied
+| reviews.summary | 
+| reviews.summary.errors | 
+| reviews.summary.review | Summarised reviews for products based on incoming user reviews gets pushed into this topu
+|=== 
+
+
+== MongoDB:
+
+MongoDB database is used to persist product reviews data and is setup in the `mongodb` namespace.
+
+
+== Next steps
+
+In the next steps, you will continue this demo by submitting reviews via the web-application and observe how the AI agents process and summarize the reviews asynchronously using Kafka as the messaging platform.

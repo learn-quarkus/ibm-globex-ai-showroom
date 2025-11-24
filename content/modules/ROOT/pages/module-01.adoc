@@ -1,149 +1,103 @@
-= Building an Application with rpms
+:imagesdir: ../assets/images
+== Module 1: Workshop Setup and Environment Walkthrough
 
-== Downloading the UBI
+This module focuses on the platform setup. 
 
-In this lab, you will be installing software into the container 
-image running as an interactive application. To do this you will
-need `yum`, but do not need `systemd` for managing services within the
-container environment.  For that reason, you will be using the *Standard*
-UBI image (as opposed to the Minimal or Multi-service images).
 
-Using the "buildah from" command will download and meld the container image. This particular image we are using is the Red Hat Universal Base Image or UBI. From the ourput of the command, you will notice that we are pulling down the latest one, which is for RHEL 9. 
+== Workshop Setup
 
-. Execute the  download the Standard UBI
-image from Red Hat's registry.
+. To provision the demo you will perform the following steps - each of which are explained in detail in the next sections:
+.. Gain access to Red Hat OpenShift. This demo has been tested on OpenShift 4.18
+. Ensure you have the tools `oc` and `ansible` installed in your local environment such as your laptop
+. Access the OpenShift cluster with cluster-admin privileges
+. Log in to OpenShift with cluster-admin role via cli. 
+. Run the Ansible playbook
+. Run a bunch of scripts to deploy the Solution Pattern in your OpenShift cluster
 
+== Before getting started
+
+Here is the list of tools you need in your local enviroment so that you can use the automated installation.
+
+. OpenShift Client https://docs.openshift.com/container-platform/4.18/cli_reference/openshift_cli/getting-started-cli.html[oc^]
+. https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html[Ansible CLI^]
+. https://docs.ansible.com/ansible/latest/collections/kubernetes/core/k8s_module.html[Ansible kubernetes.core module^]
+
+. To check if you have the cli tools, you can open your terminal and use following commands:
+```sh
+oc version #openshift cli client
+ansible --version
+ansible-galaxy --version
+ansible-galaxy collection list #the list should include kubernetes.core
+```
+
+. If you do not see *kubernetes.core* collection listed, you can install it with `ansible-galaxy`:
+```
+ansible-galaxy collection install kubernetes.core
+```
+
+== Git clone the Ansible playbook 
+
+. Login to your OpenShift cluster as cluster-admin (because a number of operators will need to be installed)
+
+. Click on the username on the top right hand, and then click on Copy login command. This will open another tab and you will need to login again. Click on Display token link, and copy the command under Log in with this token. This will look like this
+
+. Or you can login using the `oc` cli tool
 +
-[source,sh,role=execute]
-----
-buildah from registry.access.redhat.com/ubi9/ubi
-----
+```
+oc login <your-openshift-api-url> -u <username> -p <password>
+```
+. Clone the ansible scripts as follows in an appropriate folder in your local environment
 
-[#repositories]
-== Installing Repositories
-In this lab, you are going to containerize a software package that is already
-packaged in RPM format and stored in the Extra Packages for Enterprise Linux
-(EPEL) repository.
+```
+git clone https://github.com/learn-quarkus/ibm-globex-ai-ansible
+```
 
-Software often has requirements for prerequisite software that must be installed
-on the machine for it to work properly.  `yum` will resolve those
-dependencies for you, as long as it can locate the required packages in
-repositories defined on the machine.  The Red Hat Universal Base Image (UBI)
-downloaded in the previous step has access to some Red Hat Enterprise Linux
-repositories.  However, the target package for the lab is from EPEL.  
 
-. In the command below, `buildah` is going to run a command on the
-`ubi-working-container` image.  The `--` indicates that the command should be
-executed from within the container, which means the results will be applied into
-the container image.  Lastly, you are providing the `yum` command to install a
-package that defines all of the repositories from EPEL, `epel-release-latest-9`.
-
+== Setup LLM API Keys
+. Open the ansible scripts folder you just cloned in your local IDE
+. Make a copy of the *inventories/inventory.template* file and name it *inventory*
+. Update the following variables with your LLM API keys
 +
-[source,bash]
-----
-buildah run ubi-working-container -- yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
-----
+NOTE: This is an example of OpenAI modelnames that this demo has been tested with. You can use other LLM providers as well by updating the model names and base urls accordingly.
+```
+# moderation
+moderation_llm_api_key=<api-key>
+moderation_llm_model_name=omni-moderation-latest
+moderation_llm_base_url=https://api.openai.com/v1
+
+# emailwriter
+emailwriter_llm_api_key=<api-key>
+emailwriter_llm_model_name=gpt-4o-mini
+emailwriter_llm_base_url=https://api.openai.com/v1
+
+# sentiment
+sentiment_llm_api_key=<api-key>
+sentiment_llm_model_name=gpt-4o-mini
+sentiment_llm_base_url=https://api.openai.com/v1
+
+# summary
+summary_llm_api_key=<api-key>
+summary_llm_model_name=gpt-4o-mini
+summary_llm_base_url=https://api.openai.com/v1
+```
 
 
-. You can verify that the above command did not install the RPM on the host system.
 
+== Install the demo
+
+
+. Navigate to the *ansible* folder
+. Run the ansible playbook as shown below. This will take a few minutes to complete. Ensure that the ansible playbook is deployed without errors
 +
-[source,bash]
-----
-rpm -q epel-release
-----
-
-NOTE: If your repository configurations are not distributed as an RPM, but instead as
-individual `.repo` files, you could use the `buildah copy` command to copy
-files from the host operating system into the container image.  You will see
-an example of using `buildah copy` later in this lab.
-
-[#software]
-== Installing Software
-
-
-. Now that the yum repositories are defined within the container, execute 
-another `yum install`, within the container, to install the target
-software: `moon-buggy`.
-
+```
+ansible-playbook playbooks/ocp4_workload_globex_ai_poc.yml -e ACTION=create -i inventories/inventory
+```
+. This is the output you get from the above ansible command:
 +
-[source,bash]
-----
-buildah run ubi-working-container -- yum -y install moon-buggy
-----
+```
+PLAY RECAP 
+**********************************************
+localhost : ok=67 changed=3 unreachable=0 failed=0 skipped=33 rescued=0 ignored=0
+```
 
-
-== Committing the Container Image
-
-. At this point, the container is configured.  It is time to transition from a
-working container into a committed image.  In the command below, you will use
-the `buildah` command to commit the working container to an image called:
-`moon-buggy`.
-
-+
-[source,bash]
-----
-buildah commit ubi-working-container moon-buggy
-----
-
-+
-. The output of `podman image list` should confirm the image was created.
-
-+
-[source,bash]
-----
-podman image list
-----
-
-
-== Deploy the Container
-
-Now the software has been installed and a new container image created.  It is
-time to spawn a runtime of the container image and validate the software.  The
-software we are using is a command line command.  
-
-. When you `run` the container,
-it will be in interactive (`-it`) mode, based on the `moon-buggy` container
-image and the command run interactively will be `/usr/bin/moon-buggy`.
-
-+
-[source,bash]
-----
-podman run -it moon-buggy /usr/bin/moon-buggy
-----
-
-+
-[source,textinfo]
-----
-
-<<< OUTPUT ABRIDGED >>>
-               MM     MM   OOOOO    OOOOO   NN     N
-               M M   M M  O     O  O     O  N N    N
-               M  M M  M  O     O  O     O  N  N   N
-               M   M   M  O     O  O     O  N   N  N
-               M       M  O     O  O     O  N    N N
-               M       M   OOOOO    OOOOO   N     NN
-
-                     BBBBBB   U     U   GGGGG    GGGGG   Y     Y
-                     B     B  U     U  G     G  G     G   Y   Y
-                     BBBBBB   U     U  G        G          Y Y
-                     B     B  U     U  G   GGG  G   GGG     Y
-                     B     B  U     U  G     G  G     G    Y
-                     BBBBBB    UUUUU    GGGGG    GGGGG   YY
-
-<<< OUTPUT ABRIDGED >>>
-----
-
-. You can now play the Moon Buggy game, which is a text-based version of the
-popular Moon Patrol.  When you are finished, use the `q` command to quit the
-game, which will terminate the container.
-
-+
-Alternatively, you can use `podman` to kill the running container from
-*Terminal 2*.
-
-+
-[source,bash]
-----
-podman kill $(podman ps | grep -v CONTAINER | cut -f1 -d" " )
-----
+That's it! You are set to try out this demo! ｡◕‿◕｡

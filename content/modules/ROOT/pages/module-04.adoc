@@ -1,0 +1,20 @@
+
+== Module 4: Testing and Demonstration
+
+Objective: Validate the end-to-end asynchronous workflow and observe the benefits of Kafka for AI agent connectivity.
+
+== Technical Context:
+
+This phase verifies the system's reliability and scalability. The key observation is the asynchronous nature: a user submission does not wait for moderation, email generation, or summarization to complete. You will monitor the flow of data through the Kafka topics and observe the dynamic updates on the front-end, illustrating Kafka's ability to handle large, real-time loads and connect decoupled AI agents.
+
+== Steps and Instructions:
+
+Access Front-end: Open the URL for the Globex Front-end application.
+Log In: Authenticate via the Keycloak login screen.
+Submit Initial Review: Submit a review and observe the immediate "review submitted" notification.
+Monitor A-sync Flow:
+In the Kafka console, confirm the event moves from the review-intake to the review-processed topic.
+Verify the personalized thank-you email arrived in the inbox.
+Observe the product page: the review is posted, but no summary is generated (as only one review exists).
+Trigger Summary Generation: Submit at least five additional reviews for the same product to meet the minimum threshold for summary generation.
+Observe Dynamic Updates: Refresh the product page and watch the Product Summary section. You should see the summary dynamically appearing and changing as the review-summary agent processes the batch of new events, demonstrating the system's ability to react to real-time data feeds.
