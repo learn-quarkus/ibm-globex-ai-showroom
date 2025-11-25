@@ -18,7 +18,7 @@ Here is an overview of the user flow:
 3. Fetch user data from an internal API
 4. Generate a personalized thank-you email using an LLM 
 5. Send the email via the MCP Mail Server (secured with OIDC/OAuth from Keycloak) 
-6. Persist the moderated review and sentiment score to MongoDB._ 
+6. Persist the moderated review and sentiment score to MongoDB.
 * Finally, the processed review event is published to the `review-processed` Kafka topic for downstream which is the Review Summary Agent.
 
 
@@ -29,25 +29,87 @@ NOTE: MCP (Model Context Protocol) is an open standard for AI to connect with ex
 
 == Activity walk through:
 
-. Login to the OpenShift cluster and navigate to the `review-processor` project/namespace.
+=== Submit a review via the Globex Web Application
 
-Examine Review Processor Project: Review the Quarkus source code for the review-processor service.
-Identify Kafka Consumer: Locate the code consuming messages from the review-intake Kafka topic.
-Map LangGraph4j Workflow: Identify the implementation of the orchestration workflow. This workflow includes:
-LLM Calls: For Moderation and Sentiment Analysis.
-API Calls: To an internal back-end to Fetch User Data.
-Email Generation: An LLM call to draft the personalized thank-you email.
+. Login to the OpenShift cluster and navigate to the `globex-ai` project/namespace.
+. Navigate to the Routes menu, and open the `globex-web` route to access the webpage
++
+image:m2/globex-web-route.png[Globex Web]
+
+. Login as *asilva* and password as *openshift*.
++
+image:m2/globex-web-login.png[Globex Web, width=400]
+
+. Click on the *Cool Stuff Store* menu on top, and click on any of the products. 
++
+NOTE: Navigating to page 7 has some seriously cool gear!!  
++
+image:m2/globex-web-page7.png[Globex Web, width=400]
+. Choose the *Millenium 5A Maple Drumsticks* for example, and submit a review such as *These drumsticks are awesome! They have great balance and durability. Highly recommend for any drummer.*, and choose a rating of 5 stars. Then click on *Submit Review* button.
++
+image:m2/globex-web-maple5a.png[Globex Web, width=400]
+
+. You will see a confirmation message that your review has been submitted.
+. In a few seconds you will se the review appear on the page under the  *Customer Reviews* section. 
++
+image:m2/globex-web-maple5a-reviewsubmitted.png[Globex Web, width=400]
++
+NOTE: You will only this review if it were not abusive! :) 
+
+== Explore the workflow with the Kafka console
+
+. In the OpenShift console, navigate to the *kafka* project/namespace. From the Routes menu, launch the Kafka Console, and login anonmously.
++
+image:m2/kafka-console.png[Kafka Console]
+. In the Kafka Console, click on the *Topics* menu, and then click on the *review-intake* topic. Note that the message that you just submitted from the web application is visible here.
++
+image:m2/reviews-intake.png[]
+
+. The `review-service` (https://github.com/globex-ai/review-service[source code^]) in the `globex-ai` namespace has consumed your review published it to the `review-intake` topic. 
++
+[NOTE] 
+====
+With Quarkus, writing to Kafka is super simple. You can declare the Kafka topc as the Channel, and emit messages to Kafka with a single line of code as show in the snippet below of https://github.com/globex-ai/review-service/blob/main/src/main/java/org/globex/retail/ai/review/service/KafkaService.java[KafkaService class^]:
+
+```java
+    @Inject
+    @Channel("review")
+    Emitter<String> emitter;
+
+    public void emit(String key, String payload) {
+        emitter.send(toMessage(key, payload));
+    }
+```
+====
+
+. Next, the https://github.com/globex-ai/review-processor/blob/main/src/main/java/org/globex/retail/ai/RecordConsumer.java#L34-L36[`review-processor`^] agentic app kicks in and consumes this Kafka record.
+
++
+[NOTE]
+==== 
+This is done easily with just an annotation as shown below:
+
+```java
+    @Incoming("intake")
+    @Acknowledgment(Acknowledgment.Strategy.PRE_PROCESSING)
+    public Uni<Void> consume(Record<String, String> record) {
+        LOGGER.info("Received message with key:{}", record.key());
+    }
+```
+The `@Incoming("intake")` annotation indicates that this method will consume messages from the `review-intake` Kafka topic (the channel name is mapped to the topic name in the application configuration). 
+
+All messages received by a consumer must be acknowledged - otherwise he processing is considered in error. The `@Acknowledgment` annotation specifies the acknowledgment strategy for message processing.  Learn more : https://quarkus.io/guides/kafka#message-acknowledgment[Kafka Acknowledgment Strategies^].
+====
+
+. LangGraph4j Workflow: Identify the implementation of the orchestration workflow. This workflow includes:
+.. LLM Calls: For Moderation and Sentiment Analysis.
+.. API Calls: To an internal back-end to Fetch User Data.
+.. Email Generation: An LLM call to draft the personalized thank-you email.
 Secure Communication: Using the MCP server (secured with OIDC/OAuth from Keycloak) to send the email.
-Persistence: Writing the results to MongoDB.
-Build and Deploy: Build the Quarkus application and deploy the review-processor containerized service to OpenShift.
+
+. Finally, the processed review is published to the `review-processed` Kafka topic for downstream consumption by the Review Summary Agent.
 
 == Technical Context:
 
 This agent is implemented using Quarkus and leverages LangGraph4j for orchestrating a multi-step AI workflow. The use of Kafka as the event log allows the Review Processor to be decoupled from both the front-end application and the downstream Review Summary Agent, enhancing scalability and resilience. The integration with Keycloak for secure communication with the MCP Mail Server demonstrates best practices in securing AI workflows in enterprise environments.
 
-
-.Example Code Snippet
-[source,java]
-----
-include::path/to/your/file.java[tag=mySnippet]
-----
