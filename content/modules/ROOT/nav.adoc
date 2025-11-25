@@ -1,11 +1,11 @@
 * xref:index.adoc[Introduction]
 
-* xref:module-01[Module 1: Workshop Setup and Environment Walkthrough]
-** xref:module-01.1[Explore the Workshop Setup ]
+* xref:module-01.adoc[Module 1: Workshop Setup and Environment Walkthrough]
+** xref:module-01.1.adoc[Explore the Workshop Setup ]
 
 
-* xref:module-02[Module 2: The Review Processor Agentic App]
+* xref:module-02.adoc[Module 2: The Review Processor Agentic App]
 
-* xref:module-03[Module 3: The Review Summary Agentic App]
+* xref:module-03.adoc[Module 3: The Review Summary Agentic App]
 
-* xref:module-04[Module 4: End to End Testing and Demonstration]
+* xref:module-04.adoc[Module 4: End to End Testing and Demonstration]
