@@ -1,7 +1,26 @@
-
+:imagesdir: ../assets/images/m3
 == Module 3: The Review Summary Agentic App
 
 Objective: Build and deploy the second agent, focused on data analysis and dynamic content generation via LLMs.
+
+== User flow:
+
+Here is an overview of the user flow:
+
+image:review-summary-diagram.png[Review Processor Agent Diagram]
+
+* The Review Summary Agent listens to the `review-processed` Kafka topic for events published by the Review Processor Agent.
+* The agent fetched all existing reviews for the corresponding product from MongoDB.
+* It applies an algorithm to determine if a new, consolidated summary needs to be generated. +
+
+NOTE: Algorithm example: If the total number of reviews less 3, the summarization process is skipped.
+
+* If a new summary is required, the agent invokes the LLM via LangChain4j to generate a new product summary based on the existing reviews.
+* The newly generated summary is then persisted back in MongoDB, updating the product information.
+
+== Activity walk through:
+
+
 
 Technical Context:
 

@@ -6,7 +6,7 @@ Objective: Implement and deploy the first AI agent, which is a Java-based, multi
 
 == User flow:
 
-image:m2/review-processor-diagram.png[Review Processor Agent Diagram, width=600]
+image:m2/review-processor-diagram.png[Review Processor Agent Diagram]
 
 Here is an overview of the user flow:
 
@@ -26,6 +26,24 @@ NOTE: LangGraph is a library for develop AI Agentic Architectures in the Java ec
 
 NOTE: MCP (Model Context Protocol) is an open standard for AI to connect with external tools and data 
 
+
+
+== Technical Context:
+
+=== Processor Agent Implementation
+
+The Review Processor Agentic app has a number of tasks that needs to be executed. Agentic apps often need some orchestration between LLM calls to API calls and other activities. This could be dnone a few different ways
+
+One option is to leave the orchestration almost entirely to the LLM itself by building autonomous agents which make decisions in terms of which step to execute next based on results from the current step. This can be quite brittle in reality.
+
+The other options is to build a more static kind of workflow and this is what is being done here with LangGraph4j. There are several discrete steps in the workflow - some of which require a call to LLM for Moderation or Sentiment Analysis, and  API calls to a backend service to fetch the user data, and also write a confirmation email using an LLM.
+
+In the next section, you will walk through the implementation of this agentic app and understand how the different steps are implemented and orchestrated using LangGraph4j.
+
+
+=== MCP Mail Server 
+
+The MCP server  has also been implemented with Quarkus and secured with OAuth using Keycloak. The integration with Keycloak for secure communication with the MCP Mail Server demonstrates best practices in securing AI workflows in enterprise environments.
 
 == Activity walk through:
 
@@ -54,7 +72,7 @@ image:m2/globex-web-maple5a.png[Globex Web, width=400]
 +
 image:m2/globex-web-maple5a-reviewsubmitted.png[Globex Web, width=400]
 +
-NOTE: You will only this review if it were not abusive! :) 
+NOTE: You will only this review only if it were not abusive! :) 
 
 == Explore the workflow with the Kafka console
 
@@ -108,8 +126,3 @@ All messages received by a consumer must be acknowledged - otherwise he processi
 Secure Communication: Using the MCP server (secured with OIDC/OAuth from Keycloak) to send the email.
 
 . Finally, the processed review is published to the `review-processed` Kafka topic for downstream consumption by the Review Summary Agent.
-
-== Technical Context:
-
-This agent is implemented using Quarkus and leverages LangGraph4j for orchestrating a multi-step AI workflow. The use of Kafka as the event log allows the Review Processor to be decoupled from both the front-end application and the downstream Review Summary Agent, enhancing scalability and resilience. The integration with Keycloak for secure communication with the MCP Mail Server demonstrates best practices in securing AI workflows in enterprise environments.
-
